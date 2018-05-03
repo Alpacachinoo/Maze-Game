@@ -241,13 +241,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c557539e3909e9143b7cf38964fe00d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridWidth: 10
-  gridHeight: 10
+  gridWidth: 37
+  gridHeight: 37
   cellSize: 1
   tilePrefab: {fileID: 212937515474490196, guid: f3fb04da99c29284b970ed56b3f618fb,
     type: 2}
-  tilesParent: {fileID: 0}
+  tilesParent: {fileID: 49054011}
   selectionTool: {fileID: 680548298}
+  breakPoint: 1000
 --- !u!4 &1301435576
 Transform:
   m_ObjectHideFlags: 0

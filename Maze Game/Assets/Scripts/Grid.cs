@@ -13,7 +13,7 @@ public class Grid : MonoBehaviour
     [SerializeField] private int gridHeight;
 
     [SerializeField] private float cellSize;
-    public float CellSize { get { return cellSize; } }
+    public float CellSize { get { return cellSize;} }
 
     [SerializeField] private SpriteRenderer tilePrefab;
     [SerializeField] private Transform tilesParent;
@@ -28,6 +28,8 @@ public class Grid : MonoBehaviour
 
     Cell[] testNeighbours;
 
+    Cell test;
+
     private void Awake()
     {
         instance = this;
@@ -41,7 +43,9 @@ public class Grid : MonoBehaviour
 
         testCell = WorldPositionToCell(mousePos);
 
-        testNeighbours = GetNeighbours(testCell);
+        testNeighbours = GetNeighbours(testCell, 2);
+
+        test = GetCellBetweenCells(testCell, testNeighbours[1]);
 
         selectionTool.position = testCell.worldPosition;
     }
@@ -60,7 +64,55 @@ public class Grid : MonoBehaviour
                 grid[x, y] = new Cell(x, y, worldPosition, Instantiate(tilePrefab.gameObject, worldPosition, Quaternion.identity, tilesParent).GetComponent<SpriteRenderer>());
 
                 grid[x, y].tile.transform.localScale = new Vector3(cellSize / grid[x, y].tile.sprite.bounds.size.x, cellSize / grid[x, y].tile.sprite.bounds.size.y, 1);
+
+                if (x % 2 != 0 || y % 2 != 0)
+                    grid[x, y].wall = true;
             }
+        }
+
+        StartCoroutine(GenerateMaze());
+    }
+
+    private Cell currentCell;
+    private Cell previousCell;
+    private Cell[] neighbours;
+
+    public int breakPoint;
+    private int currentIteration;
+
+    private IEnumerator GenerateMaze()
+    {
+        currentCell = grid[0, 0];
+        currentCell.visited = true;
+
+        while (true)
+        {
+            neighbours = GetUnvisitedNeighbours(currentCell, 2);
+
+            if (neighbours.Length > 0)
+            {
+                previousCell = currentCell;
+                currentCell = neighbours[Random.Range(0, neighbours.Length)];
+                currentCell.parent = previousCell;
+
+                currentCell.visited = true;
+
+                GetCellBetweenCells(currentCell, previousCell).wall = false;
+            }
+            else
+            {
+                if (currentCell.parent != null)
+                    currentCell = currentCell.parent;
+                else
+                    break;
+            }
+
+            currentIteration++;
+
+            if (currentIteration >= breakPoint)
+                break;
+
+            yield return null;
         }
     }
 
@@ -72,33 +124,78 @@ public class Grid : MonoBehaviour
         return grid[x, y];
     }
 
-    public Cell[] GetNeighbours(Cell cell)
+    private Cell[] GetNeighbours(Cell cell, int spacing)
     {
         List<Cell> list = new List<Cell>();
+
+        for (int i = -1; i < 1 + 1; i++)
+        {
+            if (i == 0)
+                continue;
+
+            if (i * spacing + cell.x >= 0 && i * spacing + cell.x < gridWidth)
+                list.Add(grid[i * spacing + cell.x, cell.y]);
+
+            if (i * spacing + cell.y >= 0 && i * spacing + cell.y < gridHeight)
+                list.Add(grid[cell.x, i * spacing + cell.y]);
+        }
+
+        return list.ToArray();
+    }
+
+    private Cell[] GetUnvisitedNeighbours(Cell cell, int spacing)
+    {
+        List<Cell> list = new List<Cell>();
+
+        int x;
+        int y;
 
         for (int i = -1; i < 2; i++)
         {
             if (i == 0)
                 continue;
 
-            if (i + cell.x > 0 && i + cell.x < gridWidth)
-                list.Add(grid[i + cell.x, cell.y]);
+            x = i * spacing + cell.x;
+            y = i * spacing + cell.y;
 
-            if (i + cell.y > 0 && i + cell.y < gridHeight)
-                list.Add(grid[cell.x, i + cell.y]);
+            if (x >= 0 && x < gridWidth)
+            {
+                if (!grid[x, cell.y].visited)
+                    list.Add(grid[x, cell.y]);
+            }
+
+            if (y >= 0 && y < gridHeight)
+            {
+                if (!grid[cell.x, y].visited)
+                    list.Add(grid[cell.x, y]);
+            }
         }
 
         return list.ToArray();
     }
 
+    private Cell GetCellBetweenCells(Cell a, Cell b)
+    {
+        Vector2 _a = new Vector2(a.x, a.y);
+        Vector2 _b = new Vector2(b.x, b.y);
+
+        Vector2 dir = (_b - _a).normalized;
+
+        return grid[a.x + (int)dir.x, a.y + (int)dir.y];
+    }
+
     private void OnDrawGizmos()
     {
-        if (testNeighbours != null)
+        if (grid != null)
         {
-            foreach (Cell cell in testNeighbours)
+            foreach (Cell cell in grid)
             {
-                Gizmos.color = Color.green;
-                Gizmos.DrawCube(cell.worldPosition, Vector3.one * cellSize);
+                if (cell.wall)
+                {
+                    Gizmos.color = Color.red;
+
+                    Gizmos.DrawCube(cell.worldPosition, Vector3.one * cellSize);
+                }
             }
         }
     }

@@ -1,12 +1,17 @@
 ﻿using UnityEngine;
+using System;
 
+[Serializable]
 public class Cell
 {
     public int x { get; set; }
     public int y { get; set; }
     public Vector2 worldPosition { get; set; }
 
+    public Cell parent { get; set; }
     public bool visited { get; set; }
+    public bool wall = false;
+
     public bool walkable { get; set; }
 
     public SpriteRenderer tile { get; set; }
