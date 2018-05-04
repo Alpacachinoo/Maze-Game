@@ -22,13 +22,11 @@ public class Grid : MonoBehaviour
 
     private Vector2 worldPosition;
 
+    [SerializeField] private Block block;
+
     Cell testCell;
 
     Vector2 mousePos;
-
-    Cell[] testNeighbours;
-
-    Cell test;
 
     private void Awake()
     {
@@ -43,30 +41,28 @@ public class Grid : MonoBehaviour
 
         testCell = WorldPositionToCell(mousePos);
 
-        testNeighbours = GetNeighbours(testCell, 2);
-
-        test = GetCellBetweenCells(testCell, testNeighbours[1]);
-
         selectionTool.position = testCell.worldPosition;
     }
 
     private void InitializeGrid()
     {
         grid = new Cell[gridWidth, gridHeight];
-        selectionTool.transform.localScale = Utility.DivideFloatByVector(cellSize, tilePrefab.sprite.bounds.size);
+        //selectionTool.transform.localScale = Utility.DivideFloatByVector(cellSize, tilePrefab.sprite.bounds.size);
 
         for (int y = 0; y < gridHeight; y++)
         {
             for (int x = 0; x < gridWidth; x++)
             {
-                worldPosition = new Vector2(-gridSize.x / 2 + x * cellSize, gridSize.y / 2 + y * -cellSize);
+                worldPosition = new Vector2((x - y) * (cellSize), (y + x) * (cellSize / 2));
 
                 grid[x, y] = new Cell(x, y, worldPosition, Instantiate(tilePrefab.gameObject, worldPosition, Quaternion.identity, tilesParent).GetComponent<SpriteRenderer>());
 
-                grid[x, y].tile.transform.localScale = new Vector3(cellSize / grid[x, y].tile.sprite.bounds.size.x, cellSize / grid[x, y].tile.sprite.bounds.size.y, 1);
+                //grid[x, y].tile.transform.localScale = new Vector3(cellSize / grid[x, y].tile.sprite.bounds.size.x, cellSize / grid[x, y].tile.sprite.bounds.size.y, 1);
 
                 if (x % 2 != 0 || y % 2 != 0)
+                {
                     grid[x, y].wall = true;
+                }
             }
         }
 
@@ -114,12 +110,25 @@ public class Grid : MonoBehaviour
 
             yield return null;
         }
+
+        InstantiateWalls();
+    }
+
+    private void InstantiateWalls()
+    {
+        foreach (Cell cell in grid)
+        {
+            if (cell.wall)
+            {
+                Instantiate(block, cell.worldPosition, Quaternion.identity);
+            }
+        }
     }
 
     public Cell WorldPositionToCell(Vector2 worldPos)
     {
-        int x = Mathf.Clamp(Mathf.RoundToInt((worldPos.x + gridSize.x / 2) / cellSize), 0, gridWidth - 1);
-        int y = Mathf.Clamp(Mathf.RoundToInt((worldPos.y - gridSize.y / 2) / -cellSize), 0, gridHeight - 1);
+        int x = Mathf.Clamp(Mathf.RoundToInt((worldPos.x / cellSize + worldPos.y / (cellSize / 2)) / 2), 0, gridWidth - 1);
+        int y = Mathf.Clamp(Mathf.RoundToInt((worldPos.y / (cellSize / 2) - worldPos.x / cellSize) / 2), 0, gridHeight - 1);
 
         return grid[x, y];
     }
@@ -184,19 +193,19 @@ public class Grid : MonoBehaviour
         return grid[a.x + (int)dir.x, a.y + (int)dir.y];
     }
 
-    private void OnDrawGizmos()
-    {
-        if (grid != null)
-        {
-            foreach (Cell cell in grid)
-            {
-                if (cell.wall)
-                {
-                    Gizmos.color = Color.red;
+    //private void OnDrawGizmos()
+    //{
+    //    if (grid != null)
+    //    {
+    //        foreach (Cell cell in grid)
+    //        {
+    //            if (cell.wall)
+    //            {
+    //                Gizmos.color = Color.red;
 
-                    Gizmos.DrawCube(cell.worldPosition, Vector3.one * cellSize);
-                }
-            }
-        }
-    }
+    //                Gizmos.DrawCube(cell.worldPosition, Vector3.one * cellSize);
+    //            }
+    //        }
+    //    }
+    //}
 }

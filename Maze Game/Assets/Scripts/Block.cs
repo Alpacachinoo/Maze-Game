@@ -18,7 +18,7 @@ public class Block : MonoBehaviour
     {
         sr = GetComponent<SpriteRenderer>();
 
-        transform.localScale = Utility.DivideFloatByVector(Grid.instance.CellSize, sr.sprite.bounds.size);
+        //transform.localScale = Utility.DivideFloatByVector(Grid.instance.CellSize, sr.sprite.bounds.size);
 
         OccupyCell(Grid.instance.WorldPositionToCell(transform.position));
     }
