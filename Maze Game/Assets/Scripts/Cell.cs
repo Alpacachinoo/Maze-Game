@@ -11,6 +11,7 @@ public class Cell
     public Cell parent { get; set; }
     public bool visited { get; set; }
     public bool wall = false;
+    public bool occupied = false;
 
     public bool walkable { get; set; }
 

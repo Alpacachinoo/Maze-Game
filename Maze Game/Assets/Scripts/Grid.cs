@@ -22,7 +22,7 @@ public class Grid : MonoBehaviour
 
     private Vector2 worldPosition;
 
-    [SerializeField] private Block block;
+    [SerializeField] private Block[] blocks;
 
     Cell testCell;
 
@@ -33,15 +33,6 @@ public class Grid : MonoBehaviour
         instance = this;
 
         InitializeGrid();
-    }
-
-    private void Update()
-    {
-        mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
-        testCell = WorldPositionToCell(mousePos);
-
-        selectionTool.position = testCell.worldPosition;
     }
 
     private void InitializeGrid()
@@ -120,7 +111,7 @@ public class Grid : MonoBehaviour
         {
             if (cell.wall)
             {
-                Instantiate(block, cell.worldPosition, Quaternion.identity);
+                Instantiate(blocks[Random.Range(0, blocks.Length)], cell.worldPosition, Quaternion.identity);
             }
         }
     }
@@ -133,7 +124,15 @@ public class Grid : MonoBehaviour
         return grid[x, y];
     }
 
-    private Cell[] GetNeighbours(Cell cell, int spacing)
+    public bool WithinRadius(Cell a, Cell b, int radius)
+    {
+        if (Mathf.Abs(b.x - a.x) <= radius && Mathf.Abs(b.y - a.y) <= radius)
+            return true;
+
+        return false;
+    }
+
+    private Cell[] GetCardinalNeighbours(Cell cell, int spacing)
     {
         List<Cell> list = new List<Cell>();
 
@@ -147,6 +146,36 @@ public class Grid : MonoBehaviour
 
             if (i * spacing + cell.y >= 0 && i * spacing + cell.y < gridHeight)
                 list.Add(grid[cell.x, i * spacing + cell.y]);
+        }
+
+        return list.ToArray();
+    }
+
+    public Cell[] GetNeighbours(Cell cell, int radius)
+    {
+        List<Cell> list = new List<Cell>();
+
+        int newX, newY;
+
+        for (int x = -radius; x < radius + 1; x++)
+        {
+            for (int y = -radius; y < radius + 1; y++)
+            {
+                if (x == 0 && y == 0)
+                    continue;
+
+                newX = cell.x + x;
+                newY = cell.y + y;
+
+                if (newX >= 0 && newX < gridWidth)
+                {
+                    if (newY >= 0 && newY < gridHeight)
+                    {
+                        if (!grid[newX, newY].occupied)
+                            list.Add(grid[newX, newY]);
+                    }
+                }
+            }
         }
 
         return list.ToArray();

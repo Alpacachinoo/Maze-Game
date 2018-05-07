@@ -4,8 +4,14 @@ using UnityEngine;
 
 public class Block : MonoBehaviour
 {
+    public Action type { get { return _type; } }
+    [SerializeField] private Action _type = Action.NONE;
+
     private Cell occupiedCell;
     public Cell _occupiedCell { get { return occupiedCell; } }
+
+    public Cell[] neighbours { get { return _neighbours; } }
+    private Cell[] _neighbours;
 
     private SpriteRenderer sr;
 
@@ -23,17 +29,13 @@ public class Block : MonoBehaviour
         OccupyCell(Grid.instance.WorldPositionToCell(transform.position));
     }
 
-    public void Move(Cell cell)
+    public void OccupyCell(Cell cell)
     {
         RemoveFromCurrentCell();
 
-        OccupyCell(cell);
-    }
-
-    private void OccupyCell(Cell cell)
-    {
         occupiedCell = cell;
         occupiedCell.occupant = this;
+        occupiedCell.occupied = true;
         occupiedCell.walkable = false;
 
         transform.position = occupiedCell.worldPosition;
@@ -41,8 +43,24 @@ public class Block : MonoBehaviour
 
     private void RemoveFromCurrentCell()
     {
-        occupiedCell.occupant = null;
-        occupiedCell.walkable = true;
-        occupiedCell = null;
+        if (occupiedCell != null)
+        {
+            occupiedCell.occupant = null;
+            occupiedCell.walkable = true;
+            occupiedCell.occupied = false;
+            occupiedCell = null;
+        }
+    }
+
+    public void Select()
+    {
+        if (type != Action.NONE)
+        {
+            _neighbours = Grid.instance.GetNeighbours(occupiedCell, 1);
+
+            Controller.instance.AwaitAction(this);
+        }
     }
 }
+
+public enum Action { NONE, MOVE}
